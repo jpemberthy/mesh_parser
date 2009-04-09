@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 parsed = File.new("parsed.out", "w+")
-f = File.open("c2.out")
+f = File.open("c2-3.out")
 
 xcor = []
 ycor = []
@@ -48,6 +48,18 @@ f.each{|line|
 }
 f.close
 
-xcor.each{|x| puts x}
+i = j = 0
+
+xcor.each{|a|
+  j = 0 
+  a.each{|x|
+    unless x == "0.000000e+000"
+      #puts j.to_s + ' ' + i.to_s
+      parsed.write("#{i.to_s},#{j.to_s},#{xcor[i][j]},#{ycor[i][j]}\n")
+    end
+    j = j + 1
+  }
+  i = i + 1
+}
 
 parsed.close
