@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
 parsed = File.new("parsed.out", "w+")
-f = File.open("c2-3.out")
+f = File.open(ARGV[0])
 
 xcor = []
 ycor = []
