@@ -23,14 +23,14 @@ def build_dmatrix(file)
   2.times {file.readline}
   size = file.readline.split(" ")
   #this needs to be created dinamically
-  m = Array.new(size[2].to_i, Array.new)
+  m = Array.new(size[2].to_i) { Array.new }
   plane = 0
   #plane.times
   size[2].to_i.times do
-    (size[0].to_i/size[2].to_i).times do
+    (size[0].to_i/size[2].to_i).times {|k|
       row = file.readline
       m[plane] << row.split(" ")
-    end
+    }
     plane = plane + 1
   end
   m
@@ -45,7 +45,6 @@ f.each{|line|
     build_smatrix(ycor,f)
   when /S1/
     s1 = build_dmatrix(f)
-    puts f.readline
   when /DP0/
     dp0 = build_dmatrix(f)
   end
