@@ -45,7 +45,7 @@ f.each{|line|
     build_smatrix(ycor,f)
   when /S1/
     s1 = build_dmatrix(f)
-  when /DP0/
+  when /DP/
     dp0 = build_dmatrix(f)
   end
 }
@@ -58,8 +58,23 @@ xcor.each{|a|
   j = 0 
   a.each{|x|
     unless x == "0.000000e+000"
-      #puts j.to_s + ' ' + i.to_s
-      parsed.write("#{i.to_s},#{j.to_s},#{xcor[i][j]},#{ycor[i][j]}\n")
+      s1_str = ''
+      dp0_str = ''
+      if dp0.size == s1.size
+        dp0.size.times {|k|
+          dp0_str << dp0[k][i][j] << ','
+          s1_str << s1[k][i][j] << ','
+        }
+      else  
+        dp0.size.times {|k|
+          dp0_str << dp0[k][i][j] << ','
+        }
+        s1.size.times {|k|
+          s1_str << s1[k][i][j] << ','
+        }
+      end  
+      dp0_str.chop!
+      parsed.write("#{i.to_s},#{j.to_s},#{xcor[i][j]},#{ycor[i][j]},#{s1_str},#{dp0_str}\n")
     end
     j = j + 1
   }
