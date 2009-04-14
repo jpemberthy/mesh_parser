@@ -7,45 +7,50 @@ ycor = []
 s1 = []
 dp0 = []
 
+
+#builds a simple matriz(no planes) based on the file information
+def build_smatrix(m,file)
+  2.times {file.readline}
+  size = file.readline.split(" ")
+  size[0].to_i.times do
+    row = file.readline
+    m << row.split(" ")
+  end
+end
+
+#builds and returns and array of matrix, based on the file line/location/information and the plane variable.
+def build_dmatrix(file)
+  2.times {file.readline}
+  size = file.readline.split(" ")
+  #this needs to be created dinamically
+  m = Array.new(size[2].to_i, Array.new)
+  plane = 0
+  #plane.times
+  size[2].to_i.times do
+    (size[0].to_i/size[2].to_i).times do
+      row = file.readline
+      m[plane] << row.split(" ")
+    end
+    plane = plane + 1
+  end
+  m
+end
+
 f.each{|line|
+  
   case line
   when /XCOR/
-    2.times {f.readline}
-    size = f.readline.split(" ")
-    size[0].to_i.times do
-      row = f.readline
-      xcor << row.split(" ")
-    end
+    build_smatrix(xcor, f)
   when /YCOR/
-    2.times {f.readline}
-    size = f.readline.split(" ")
-    size[0].to_i.times do
-      row = f.readline
-      ycor << row.split(" ")
-    end
+    build_smatrix(ycor,f)
   when /S1/
-    2.times {f.readline}
-    size = f.readline.split(" ")
-    #this needs to be created dinamically
-    s1 = Array.new(size[2].to_i, Array.new)
-    plane = 0
-    #plane.times
-    size[2].to_i.times do
-      (size[0].to_i/size[2].to_i).times do
-        row = f.readline
-        s1[plane] << row.split(" ")
-      end
-      plane = plane + 1
-    end
+    s1 = build_dmatrix(f)
+    puts f.readline
   when /DP0/
-    2.times {f.readline}
-    size = f.readline.split(" ")
-    size[0].to_i.times do
-      row = f.readline
-      dp0 << row.split(" ")
-    end
+    dp0 = build_dmatrix(f)
   end
 }
+
 f.close
 
 i = j = 0
