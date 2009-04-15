@@ -1,12 +1,29 @@
 #!/usr/bin/ruby
-parsed = File.new("parsed.out", "w+")
-f = File.open(ARGV[0])
 
-xcor = []
-ycor = []
-s1 = []
-dp0 = []
-indexes = []
+class MeshParser
+
+def initialize
+  @xcor = []
+  @ycor = []
+  @s1 = []
+  @dp0 = []
+  @indexes = []
+  @ind_1_inf = ind_2_inf = ind_1_sup = ind_2_sup  = -1
+  @markLow = []
+  @markUpp = []
+end
+
+
+def parse
+  parsed = File.new("parsed.out", "w+")
+  f = File.open(ARGV[0])
+  #call functions
+  puts 'foo'
+  f.close
+  parsed.close
+  
+end
+
 
 
 #builds a simple matriz(no planes) based on the file information
@@ -43,49 +60,13 @@ def matrix_ready?(x, y, s1, dp0)
   false
 end
 
-line = f.readline
-
-until matrix_ready?(xcor, ycor, s1, dp0) 
-  
-  if line =~ (/XCOR|YCOR|S1|DP/)
-    if line =~ /XCOR/
-      build_smatrix(xcor, f)
-    elsif line =~ /YCOR/
-      build_smatrix(ycor,f)
-    elsif line =~ /S1/
-      s1 = build_dmatrix(f)
-    elsif line =~ /DP/
-      dp0 = build_dmatrix(f)
-    end
-  end
-  
-  line = f.readline
+def distance(a1, a2)
+  Math.sqrt( ((a1[0] - a2[0])**2) + ((a1[1] - a2[1])**2) )
 end
 
-
-
-f.close
-
-
-i = 0
-xcor.each{|a|
-  j = 0
-  a.each{|x|
-    unless x == "0.000000e+000"
-      indexes << [i,j]
-    end
-    j = j + 1
-  }
-  i = i + 1
-}
-
-markLow = Array(indexes.size, true) 
-markUpp = Array(indexes.sizes, true)
-ind_1_inf = ind_2_inf = ind_1_sup = ind_2_sup  = -1
-
 def get_triangle_points(posInf, posSup)
-  markLow[pos] = false
-  markUpp[pos] = false
+  markLow[posInf] = false
+  markUpp[posSup] = false
   
   min_1_inf =  min_2_inf = min_1_sup = min_2_sup = 999
   ind_1_inf = ind_2_inf = ind_1_sup = ind_2_sup  = -1
@@ -96,7 +77,7 @@ def get_triangle_points(posInf, posSup)
   for i in 0..indexes.size
     ct = indexes.size - 1 - i
     
-    if (min_1_inf > distance(disInf, indexes[i])) and markLow[i]
+    if (min_1_inf > distance(distInf, indexes[i])) and markLow[i]
       min_1_inf = distance(distInf, indexes[i])
       ind_1_inf = i
     elsif (min_2_inf > distance(distInf, indexes[i])) and markLow[i] and i != ind_1_inf
@@ -114,6 +95,68 @@ def get_triangle_points(posInf, posSup)
     
   end
 
+end
+
+=begin
+line = f.readline
+
+until matrix_ready?(xcor, ycor, s1, dp0) 
+  
+  if line =~ (/XCOR|YCOR|S1|DP/)
+    if line =~ /XCOR/
+      puts 'init xcor'
+      build_smatrix(xcor, f)
+      puts 'finish xcor'
+    elsif line =~ /YCOR/
+            puts 'init ycor'
+      build_smatrix(ycor,f)
+            puts 'finish ycor'
+    elsif line =~ /S1/
+            puts 'init s1'
+      s1 = build_dmatrix(f)
+      puts 'finish s1'
+    elsif line =~ /DP/
+      puts 'init dp'
+      dp0 = build_dmatrix(f)
+      puts 'finish dp'
+    end
+  end
+  
+  line = f.readline unless f.eof?
+end
+
+=begin
+i = 0
+xcor.each{|a|
+  j = 0
+  a.each{|x|
+    unless x == "0.000000e+000"
+      indexes << [i,j]
+    end
+    j = j + 1
+  }
+  i = i + 1
+}
+
+markLow = Array.new(indexes.size, true) 
+markUpp = Array.new(indexes.size, true)
+
+puts indexes[0][1]
+
+#generates triangle points
+
+=begin
+for i in 0..indexes.size
+  get_triangle_points(i, indexes.size - 1 - i, markLow, markUpp, indexes)
+  
+  if ind_1_inf != -1 and ind_2_inf != -1
+    puts i.to_s + ' ' + ind_1_inf.to_s + ' ' + ind_2_inf.to_s
+  end
+  
+  if ind_1_sup != -1 and ind_2_sup != -1
+    puts (indexes.size - 1 - i).to_s + ' ' + ind_1_inf.to_s + ' ' + ind_2_inf.to_s
+  end
+  
 end
 
 =begin
@@ -147,5 +190,7 @@ xcor.each{|a|
   i = i + 1
 }
 =end
+end
 
-parsed.close
+p = MeshParser.new
+p.parse
