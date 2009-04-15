@@ -36,19 +36,38 @@ def build_dmatrix(file)
   m
 end
 
-f.each{|line|
+#true if all matrix have been already parsed.
+def matrix_ready?(x, y, s1, dp0)
+  return true if (x.size > 0) and (y.size > 0) and (s1.size > 0) and (dp0.size > 0)
+  false
+end
+
+line = f.readline
+
+until matrix_ready?(xcor, ycor, s1, dp0) 
   
-  case line
-  when /XCOR/
-    build_smatrix(xcor, f)
-  when /YCOR/
-    build_smatrix(ycor,f)
-  when /S1/
-    s1 = build_dmatrix(f)
-  when /DP/
-    dp0 = build_dmatrix(f)
+  if line =~ (/XCOR|YCOR|S1|DP/)
+    if line =~ /XCOR/
+      build_smatrix(xcor, f)
+      puts 'finish xcor'
+    elsif line =~ /YCOR/
+      build_smatrix(ycor,f)
+      puts 'finish ycor'
+    elsif line =~ /S1/
+      puts 'starting s1'
+      s1 = build_dmatrix(f)
+      puts 'finishig s1'
+    elsif line =~ /DP/
+      puts 'starting dp0'
+      dp0 = build_dmatrix(f)
+      puts 'finishig dp0'
+    end
   end
-}
+  
+  line = f.readline
+end
+
+puts 'salio'
 
 f.close
 
@@ -74,6 +93,7 @@ xcor.each{|a|
         }
       end  
       dp0_str.chop!
+      s1_str.chop!
       parsed.write("#{i.to_s},#{j.to_s},#{xcor[i][j]},#{ycor[i][j]},#{s1_str},#{dp0_str}\n")
     end
     j = j + 1
