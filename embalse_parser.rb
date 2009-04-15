@@ -6,6 +6,7 @@ xcor = []
 ycor = []
 s1 = []
 dp0 = []
+indexes = []
 
 
 #builds a simple matriz(no planes) based on the file information
@@ -49,28 +50,73 @@ until matrix_ready?(xcor, ycor, s1, dp0)
   if line =~ (/XCOR|YCOR|S1|DP/)
     if line =~ /XCOR/
       build_smatrix(xcor, f)
-      puts 'finish xcor'
     elsif line =~ /YCOR/
       build_smatrix(ycor,f)
-      puts 'finish ycor'
     elsif line =~ /S1/
-      puts 'starting s1'
       s1 = build_dmatrix(f)
-      puts 'finishig s1'
     elsif line =~ /DP/
-      puts 'starting dp0'
       dp0 = build_dmatrix(f)
-      puts 'finishig dp0'
     end
   end
   
   line = f.readline
 end
 
-puts 'salio'
+
 
 f.close
 
+
+i = 0
+xcor.each{|a|
+  j = 0
+  a.each{|x|
+    unless x == "0.000000e+000"
+      indexes << [i,j]
+    end
+    j = j + 1
+  }
+  i = i + 1
+}
+
+markLow = Array(indexes.size, true) 
+markUpp = Array(indexes.sizes, true)
+ind_1_inf = ind_2_inf = ind_1_sup = ind_2_sup  = -1
+
+def get_triangle_points(posInf, posSup)
+  markLow[pos] = false
+  markUpp[pos] = false
+  
+  min_1_inf =  min_2_inf = min_1_sup = min_2_sup = 999
+  ind_1_inf = ind_2_inf = ind_1_sup = ind_2_sup  = -1
+  
+  distInf = indexes[posInf]
+  distSup = indexes[posSup]
+  
+  for i in 0..indexes.size
+    ct = indexes.size - 1 - i
+    
+    if (min_1_inf > distance(disInf, indexes[i])) and markLow[i]
+      min_1_inf = distance(distInf, indexes[i])
+      ind_1_inf = i
+    elsif (min_2_inf > distance(distInf, indexes[i])) and markLow[i] and i != ind_1_inf
+      min_2_inf = distance(distInf, indexes[i])
+      ind_2_inf = i
+    end
+    
+    if (min_1_sup > distance(distSup, indexes[ct])) and markUpp[ct]
+      min_1_sup = distance(distSup, indexes[ct])
+      ind_1_sup = ct
+    elsif (min_2_sup > distance(distSup, indexes[ct])) and markUpp[ct] and ct != ind_1_sup
+      min_2_sup = distance(distSup, indexes[ct])
+      ind_2_sup = ct
+    end
+    
+  end
+
+end
+
+=begin
 i = j = 0
 
 xcor.each{|a|
@@ -100,5 +146,6 @@ xcor.each{|a|
   }
   i = i + 1
 }
+=end
 
 parsed.close
