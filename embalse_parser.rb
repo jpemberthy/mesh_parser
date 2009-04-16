@@ -27,9 +27,9 @@ def parse
   puts 'init building indexes'
   build_indexes
   puts 'finish building indexes'
-  puts 'init calculcating distances'
-  calculate_distances
-  puts 'finish calculating'
+  puts 'init calculcating triangles'
+  calculate_triangles
+  puts 'finish calculating triangles'
   @f.close
   @parsed.close
 end
@@ -65,16 +65,69 @@ def generate_triangles
   end
 end
 
-def calculate_distances
-  puts @indexes.size
-  @m = Array.new(@indexes.size) { Array.new }
-  puts 'hola'
+def calculate_triangles
+  markados_inf = []
+  puntos_inf = []
+  markados_sup = []
+  puntos_sup = []
+  
   for i in 0..@indexes.size-1
-    p = @indexes[i]
-    for j in i+1..@indexes.size-1
-      @m[i][j] = distance(p, @indexes[j])
+    
+    r_ct = @indexes.size-1-i
+    
+    markados_inf[i] = Array.new
+    puntos_inf[i] = Array.new
+    
+    puntos_inf[i] << i
+    markados_inf[i] << i
+    p1 = @indexes[i]
+    next_p1 = nil
+
+    if @indexes[i+1]
+      if @indexes[i+1][0] == @indexes[i][0]
+        puntos_inf[i] << i+1
+        next_p1 = @indexes[i+1]
+      end
+    end
+
+    cont = get_next_row(i)
+
+    if cont and next_p1
+      k = @indexes[cont][0]
+      while puntos_inf[i].size < 3
+        current_p = @indexes[cont]
+        next_p = @indexes[cont+1]
+        if next_p
+
+          d1 = dist(p1,next_p1, current_p) 
+          d2 = dist(p1,next_p1, next_p)
+
+          if d1 <= d2 and !markados_inf[i].include?(cont)
+            markados_inf[i] << cont
+            puntos_inf[i] << cont
+          end
+        else
+          markados_inf[i] << cont
+          puntos_inf[i] << cont
+        end
+        break if @indexes[cont][0] != k    
+        cont = cont + 1
+      end
+      puts "salio de la iteracion No: " + i.to_s + 'puntos_inf: ' + puntos_inf[i][0].to_s + ' ' + puntos_inf[i][1].to_s + ' ' + puntos_inf[i][2].to_s
+    end
+
+  end
+end
+
+
+def get_next_row(i)
+  r = @indexes[i][0]
+  for j in i..@indexes.size-1
+    if(@indexes[j][0] != r)
+      return j
     end
   end
+  false
 end
 
 #builds all the matrices.
@@ -135,6 +188,9 @@ def distance(a1, a2)
   Math.sqrt( ((a1[0] - a2[0])**2) + ((a1[1] - a2[1])**2) )
 end
 
+def dist(a1, a2, a3)
+ Math.sqrt( ((a1[0] - a3[0])**2) + ((a1[1] - a3[1])**2) ) + Math.sqrt( ((a2[0] - a3[0])**2) + ((a2[1] - a3[1])**2) )
+end
 
 =begin
 def get_triangle_points(posInf, posSup) 
