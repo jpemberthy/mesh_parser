@@ -2,7 +2,7 @@
 
 class MeshParser
 
-attr_accessor :xcor, :ycor, :dp0, :s1, :parsed, :indexes, :markLow, :markUpp, :ind_1_inf, :ind_2_inf, :ind_1_sup, :ind_2_sup
+attr_accessor :xcor, :ycor, :dp0, :s1, :parsed, :indexes, :markLow, :markUpp, :ind_1_inf, :ind_2_inf, :ind_1_sup, :ind_2_sup, :m
 attr_reader :f
 
 def initialize
@@ -15,6 +15,7 @@ def initialize
   @indexes = []
   @markLow = []
   @markUpp = []
+  @m = []
 end
 
 
@@ -26,12 +27,11 @@ def parse
   puts 'init building indexes'
   build_indexes
   puts 'finish building indexes'
-  puts 'init generating triangles'
-  generate_triangles
-  puts 'finish triangles'
+  puts 'init calculcating distances'
+  calculate_distances
+  puts 'finish calculating'
   @f.close
   @parsed.close
-  
 end
 
 #builds the indexes array.
@@ -61,6 +61,18 @@ def generate_triangles
     end
     if ind_1_sup != -1 and ind_2_sup != -1
       puts (@indexes.size - 1 - i).to_s + ' ' + @ind_1_sup.to_s + ' ' + @ind_2_sup.to_s
+    end
+  end
+end
+
+def calculate_distances
+  puts @indexes.size
+  @m = Array.new(@indexes.size) { Array.new }
+  puts 'hola'
+  for i in 0..@indexes.size-1
+    p = @indexes[i]
+    for j in i+1..@indexes.size-1
+      @m[i][j] = distance(p, @indexes[j])
     end
   end
 end
@@ -123,6 +135,8 @@ def distance(a1, a2)
   Math.sqrt( ((a1[0] - a2[0])**2) + ((a1[1] - a2[1])**2) )
 end
 
+
+=begin
 def get_triangle_points(posInf, posSup) 
   @markLow[posInf] = false
   @markUpp[posSup] = false
@@ -135,7 +149,7 @@ def get_triangle_points(posInf, posSup)
   
   for i in 0..@indexes.size - 1
     ct = @indexes.size - 1 - i
-        puts 'i: ' + i.to_s + '| ct: ' + ct.to_s
+        #puts 'i: ' + i.to_s + '| ct: ' + ct.to_s
     
     if (min_1_inf > distance(distInf, @indexes[i])) and @markLow[i]
       min_1_inf = distance(distInf, @indexes[i])
