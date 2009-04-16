@@ -2,51 +2,81 @@
 
 class MeshParser
 
+attr_accessor :f, :xcor, :ycor, :dp0, :s1, :parsed
+
 def initialize
+  @f = File.new(ARGV[0])
+  @parsed = File.new("parsed.out", "w+")
   @xcor = []
   @ycor = []
-  @s1 = []
   @dp0 = []
-  @indexes = []
-  @ind_1_inf = ind_2_inf = ind_1_sup = ind_2_sup  = -1
-  @markLow = []
-  @markUpp = []
+  @s1 = []
 end
 
 
 def parse
-  parsed = File.new("parsed.out", "w+")
-  f = File.open(ARGV[0])
+  ind_1_inf = ind_2_inf = ind_1_sup = ind_2_sup  = -1
+  markLoww = []
+  markUpp = []
+  build_all
   #call functions
-  puts 'foo'
-  f.close
-  parsed.close
+  @f.close
+  @parsed.close
   
 end
 
 
+#builds all the matrix
+def build_all
+  line = @f.readline
+
+  until matrix_ready?(@xcor, @ycor, @s1, @dp0) 
+
+    if line =~ (/XCOR|YCOR|S1|DP/)
+      if line =~ /XCOR/
+        puts 'init xcor'
+        build_smatrix(@xcor)
+        puts 'finish xcor'
+      elsif line =~ /YCOR/
+              puts 'init ycor'
+        build_smatrix(@ycor)
+              puts 'finish ycor'
+      elsif line =~ /S1/
+              puts 'init s1'
+        @s1 = build_dmatrix
+        puts 'finish s1'
+      elsif line =~ /DP/
+        puts 'init dp'
+        @dp0 = build_dmatrix
+        puts 'finish dp'
+      end
+    end
+    line = @f.readline unless @f.eof?
+  end
+
+end
 
 #builds a simple matriz(no planes) based on the file information
-def build_smatrix(m,file)
-  2.times {file.readline}
-  size = file.readline.split(" ")
+def build_smatrix(m)
+  2.times {@f.readline}
+  size = @f.readline.split(" ")
   size[0].to_i.times do
-    row = file.readline
+    row = @f.readline
     m << row.split(" ")
   end
 end
 
 #builds and returns and array of matrix, based on the file line/location/information and the plane variable.
-def build_dmatrix(file)
-  2.times {file.readline}
-  size = file.readline.split(" ")
+def build_dmatrix
+  2.times {@f.readline}
+  size = @f.readline.split(" ")
   #this needs to be created dinamically
   m = Array.new(size[2].to_i) { Array.new }
   plane = 0
   #plane.times
   size[2].to_i.times do
     (size[0].to_i/size[2].to_i).times {|k|
-      row = file.readline
+      row = @f.readline
       m[plane] << row.split(" ")
     }
     plane = plane + 1
