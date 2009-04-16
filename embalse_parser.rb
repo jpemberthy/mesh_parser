@@ -34,21 +34,13 @@ def build_all
 
     if line =~ (/XCOR|YCOR|S1|DP/)
       if line =~ /XCOR/
-        puts 'init xcor'
         build_smatrix(@xcor)
-        puts 'finish xcor'
       elsif line =~ /YCOR/
-              puts 'init ycor'
         build_smatrix(@ycor)
-              puts 'finish ycor'
       elsif line =~ /S1/
-              puts 'init s1'
         @s1 = build_dmatrix
-        puts 'finish s1'
       elsif line =~ /DP/
-        puts 'init dp'
         @dp0 = build_dmatrix
-        puts 'finish dp'
       end
     end
     line = @f.readline unless @f.eof?
