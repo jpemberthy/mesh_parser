@@ -2,7 +2,7 @@
 
 class MeshParser
 
-attr_accessor :xcor, :ycor, :dp0, :s1, :indexes
+attr_accessor :xcor, :ycor, :dp0, :s1, :indexes, :tolerance
 attr_reader :f
 attr_writer :parsed
 
@@ -14,6 +14,7 @@ def initialize
   @dp0 = []
   @s1 = []
   @indexes = []
+  @tolerance = 5 #this value makes smoother the mesh.
 end
 
 
@@ -52,59 +53,6 @@ def build_indexes
   @markUpp = Array.new(@indexes.size, true)
 end
 
-def calculate_triangles_sup
-  markados_sup = []
-  puntos_sup = []
-  
-  r_i = @indexes.size-1
-  
-  while(r_i >=0)
-    markados_sup[r_i] = Array.new
-    puntos_sup[r_i] = Array.new
-    
-    puntos_sup[r_i] << r_i
-    markados_sup[r_i] << r_i
-    
-    p2 = @indexes[r_i]
-    bef_p2 = nil
-    
-    if @indexes[r_i-1]
-      if @indexes[r_i-1][0] == @indexes[r_i][0]
-        puntos_sup[r_i] << r_i - 1
-        bef_p2 = @indexes[r_i-1]
-      end
-    end
-
- 
-    r_cont = get_last_row(r_i)
-    
-    if r_cont and bef_p2
-      r_k = @indexes[r_cont][0]
-      while puntos_sup[r_i].size < 3
-        r_current_p = @indexes[r_cont]
-        r_bef_p = @indexes[r_cont -1]
-        if r_bef_p
-        
-          d1 = dist(p2, bef_p2, r_current_p)
-          d2 = dist(p2, bef_p2, r_bef_p)
-        
-          if d1 <= d2 and !markados_sup[r_i].include?(r_cont)
-            markados_sup[r_i] << r_cont
-            puntos_sup[r_i] << r_cont
-          end
-        else 
-          markados_sup[r_i] << r_cont
-          puntos_sup[r_i] << r_cont
-        end
-          break if @indexes[r_cont][0] != r_k
-          r_cont = r_cont - 1
-      end
-      puts "salio de la iteracion No: " + r_i.to_s + 'puntos_inf: ' + puntos_sup[r_i][0].to_s + ' ' + puntos_sup[r_i][1].to_s + ' ' + puntos_sup[r_i][2].to_s
-    end    
-    r_i = r_i - 1
-  end
-end
-
 def calculate_triangles
   markados_inf = []
   puntos_inf = [] 
@@ -131,7 +79,8 @@ def calculate_triangles
     end
 
     cont = get_next_row(i)
-
+    v_point_inf = false
+    
     if cont and next_p1
       k = @indexes[cont][0]
       while puntos_inf[i].size < 3
@@ -141,7 +90,9 @@ def calculate_triangles
 
           d1 = dist(p1,next_p1, current_p) 
           d2 = dist(p1,next_p1, next_p)
-
+          
+          v_point_inf = true if (d1 <= @tolerance and d2 <= @tolerance)
+          
           if d1 <= d2 and !markados_inf[i].include?(cont)
             markados_inf[i] << cont
             puntos_inf[i] << cont
@@ -153,7 +104,10 @@ def calculate_triangles
         break if @indexes[cont][0] != k    
         cont = cont + 1
       end
-      triangles << "#{puntos_inf[i][0].to_s},#{puntos_inf[i][1].to_s},#{puntos_inf[i][2].to_s},"
+      if v_point_inf
+        triangles << "#{puntos_inf[i][0].to_s},#{puntos_inf[i][1].to_s},#{puntos_inf[i][2].to_s},"
+        v_point_inf = false
+      end
       #puts "salio de la iteracion No: " + i.to_s + 'puntos_inf: ' + puntos_inf[i][0].to_s + ' ' + puntos_inf[i][1].to_s + ' ' + puntos_inf[i][2].to_s
     end
     
@@ -176,6 +130,8 @@ def calculate_triangles
 
  
     r_cont = get_last_row(r_i)
+    v_point_sup = false
+    
     
     if r_cont and bef_p2
       r_k = @indexes[r_cont][0]
@@ -186,8 +142,10 @@ def calculate_triangles
         
           d1 = dist(p2, bef_p2, r_current_p)
           d2 = dist(p2, bef_p2, r_bef_p)
-        
-          if d1 <= d2 and !markados_sup[r_i].include?(r_cont)
+          
+          v_point_sup = true if (d1 <= @tolerance and d2 <= @tolerance)
+          
+          if d1 <= d2 and !markados_sup[r_i].include?(r_cont) 
             markados_sup[r_i] << r_cont
             puntos_sup[r_i] << r_cont
           end
@@ -198,7 +156,11 @@ def calculate_triangles
           break if @indexes[r_cont][0] != r_k
           r_cont = r_cont - 1
       end
-      triangles << "#{puntos_sup[r_i][0].to_s},#{puntos_sup[r_i][1].to_s},#{puntos_sup[r_i][2].to_s},"
+      
+      if v_point_sup
+        triangles << "#{puntos_sup[r_i][0].to_s},#{puntos_sup[r_i][1].to_s},#{puntos_sup[r_i][2].to_s},"
+        v_point_sup = false
+      end
       #puts "salio de la iteracion No: " + r_i.to_s + 'puntos_inf: ' + puntos_sup[r_i][0].to_s + ' ' + puntos_sup[r_i][1].to_s + ' ' + puntos_sup[r_i][2].to_s
     end    
     r_i = r_i - 1
