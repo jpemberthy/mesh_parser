@@ -2,8 +2,9 @@
 
 class MeshParser
 
-attr_accessor :xcor, :ycor, :dp0, :s1, :parsed, :indexes
+attr_accessor :xcor, :ycor, :dp0, :s1, :indexes
 attr_reader :f
+attr_writer :parsed
 
 def initialize
   @f = File.new(ARGV[0])
@@ -19,12 +20,15 @@ end
 def parse
   puts 'init building matrix'
   build_all
-  puts 'finish matrix'
   puts 'init building indexes'
   build_indexes
-  puts 'finish building indexes'
+  puts 'init writing matrixess info'
+  @parsed.write("**** VALUES ****\n")
+  write_points_info
   puts 'init calculcating triangles'
+  @parsed.write("**** TRIANGLES ****\n")
   calculate_triangles
+  @parsed.write("\n")
   puts 'finish calculating triangles'
   @f.close
   @parsed.close
@@ -46,19 +50,6 @@ def build_indexes
   }
   @markLow = Array.new(@indexes.size, true) 
   @markUpp = Array.new(@indexes.size, true)
-end
-
-#generates the triangles.
-def generate_triangles
-  for i in 0..@indexes.size
-    get_triangle_points(i, @indexes.size - 1 - i)
-    if @ind_1_inf != -1 and @ind_2_inf != -1
-      puts i.to_s + ' ' + @ind_1_inf.to_s + ' ' + @ind_2_inf.to_s
-    end
-    if ind_1_sup != -1 and ind_2_sup != -1
-      puts (@indexes.size - 1 - i).to_s + ' ' + @ind_1_sup.to_s + ' ' + @ind_2_sup.to_s
-    end
-  end
 end
 
 def calculate_triangles_sup
@@ -161,6 +152,7 @@ def calculate_triangles
         break if @indexes[cont][0] != k    
         cont = cont + 1
       end
+      @parsed.write("#{puntos_inf[i][0].to_s},#{puntos_inf[i][1].to_s},#{puntos_inf[i][2].to_s},")
       #puts "salio de la iteracion No: " + i.to_s + 'puntos_inf: ' + puntos_inf[i][0].to_s + ' ' + puntos_inf[i][1].to_s + ' ' + puntos_inf[i][2].to_s
     end
     
@@ -205,6 +197,7 @@ def calculate_triangles
           break if @indexes[r_cont][0] != r_k
           r_cont = r_cont - 1
       end
+      @parsed.write("#{puntos_sup[r_i][0].to_s},#{puntos_sup[r_i][1].to_s},#{puntos_sup[r_i][2].to_s},")
       #puts "salio de la iteracion No: " + r_i.to_s + 'puntos_inf: ' + puntos_sup[r_i][0].to_s + ' ' + puntos_sup[r_i][1].to_s + ' ' + puntos_sup[r_i][2].to_s
     end    
     r_i = r_i - 1
@@ -241,6 +234,7 @@ def build_all
   line = @f.readline
   until matrix_ready?(@xcor, @ycor, @s1, @dp0) 
     if line =~ (/XCOR|YCOR|S1|DP/)
+      @parsed.write(line)
       if line =~ /XCOR/
         build_smatrix(@xcor)
       elsif line =~ /YCOR/
@@ -298,38 +292,37 @@ def dist(a1, a2, a3)
  Math.sqrt( ((a1[0] - a3[0])**2) + ((a1[1] - a3[1])**2) ) + Math.sqrt( ((a2[0] - a3[0])**2) + ((a2[1] - a3[1])**2) )
 end
 
-=begin
-i = j = 0
-
-xcor.each{|a|
-  j = 0 
-  a.each{|x|
-    unless x == "0.000000e+000"
-      s1_str = ''
-      dp0_str = ''
-      if dp0.size == s1.size
-        dp0.size.times {|k|
-          dp0_str << dp0[k][i][j] << ','
-          s1_str << s1[k][i][j] << ','
-        }
-      else  
-        dp0.size.times {|k|
-          dp0_str << dp0[k][i][j] << ','
-        }
-        s1.size.times {|k|
-          s1_str << s1[k][i][j] << ','
-        }
-      end  
-      dp0_str.chop!
-      s1_str.chop!
-      parsed.write("#{i.to_s},#{j.to_s},#{xcor[i][j]},#{ycor[i][j]},#{s1_str},#{dp0_str}\n")
-    end
-    j = j + 1
+def write_points_info
+  i = j = 0
+  @xcor.each{|a|
+    j = 0 
+    a.each{|x|
+      unless x == "0.000000e+000"
+        s1_str = ''
+        dp0_str = ''
+        if @dp0.size == @s1.size
+          @dp0.size.times {|k|
+            dp0_str << @dp0[k][i][j] << ','
+            s1_str << @s1[k][i][j] << ','
+          }
+        else  
+          @dp0.size.times {|k|
+            dp0_str << @dp0[k][i][j] << ','
+          }
+          @s1.size.times {|k|
+            s1_str << @s1[k][i][j] << ','
+          }
+        end  
+        dp0_str.chop!
+        s1_str.chop!
+        @parsed.write("#{xcor[i][j]},#{ycor[i][j]},#{s1_str},#{dp0_str}\n")
+      end
+      j = j + 1
+    }
+    i = i + 1
   }
-  i = i + 1
-}
-=end
 end
 
+end
 p = MeshParser.new
 p.parse
