@@ -2,7 +2,7 @@
 
 class MeshParser
 
-attr_accessor :xcor, :ycor, :dp0, :s1, :parsed, :indexes, :markLow, :markUpp, :ind_1_inf, :ind_2_inf, :ind_1_sup, :ind_2_sup, :m
+attr_accessor :xcor, :ycor, :dp0, :s1, :parsed, :indexes
 attr_reader :f
 
 def initialize
@@ -13,14 +13,10 @@ def initialize
   @dp0 = []
   @s1 = []
   @indexes = []
-  @markLow = []
-  @markUpp = []
-  @m = []
 end
 
 
 def parse
-  @ind_1_inf = @ind_2_inf = @ind_1_sup = @ind_2_sup  = -1
   puts 'init building matrix'
   build_all
   puts 'finish matrix'
@@ -65,19 +61,71 @@ def generate_triangles
   end
 end
 
-def calculate_triangles
-  markados_inf = []
-  puntos_inf = []
+def calculate_triangles_sup
   markados_sup = []
   puntos_sup = []
   
-  for i in 0..@indexes.size-1
+  r_i = @indexes.size-1
+  
+  while(r_i >=0)
+    markados_sup[r_i] = Array.new
+    puntos_sup[r_i] = Array.new
     
-    r_ct = @indexes.size-1-i
+    puntos_sup[r_i] << r_i
+    markados_sup[r_i] << r_i
+    
+    p2 = @indexes[r_i]
+    bef_p2 = nil
+    
+    if @indexes[r_i-1]
+      if @indexes[r_i-1][0] == @indexes[r_i][0]
+        puntos_sup[r_i] << r_i - 1
+        bef_p2 = @indexes[r_i-1]
+      end
+    end
+
+ 
+    r_cont = get_last_row(r_i)
+    
+    if r_cont and bef_p2
+      r_k = @indexes[r_cont][0]
+      while puntos_sup[r_i].size < 3
+        r_current_p = @indexes[r_cont]
+        r_bef_p = @indexes[r_cont -1]
+        if r_bef_p
+        
+          d1 = dist(p2, bef_p2, r_current_p)
+          d2 = dist(p2, bef_p2, r_bef_p)
+        
+          if d1 <= d2 and !markados_sup[r_i].include?(r_cont)
+            markados_sup[r_i] << r_cont
+            puntos_sup[r_i] << r_cont
+          end
+        else 
+          markados_sup[r_i] << r_cont
+          puntos_sup[r_i] << r_cont
+        end
+          break if @indexes[r_cont][0] != r_k
+          r_cont = r_cont - 1
+      end
+      puts "salio de la iteracion No: " + r_i.to_s + 'puntos_inf: ' + puntos_sup[r_i][0].to_s + ' ' + puntos_sup[r_i][1].to_s + ' ' + puntos_sup[r_i][2].to_s
+    end    
+    r_i = r_i - 1
+  end
+end
+
+def calculate_triangles
+  markados_inf = []
+  puntos_inf = [] 
+  markados_sup = []
+  puntos_sup = []
+  
+  r_i = @indexes.size-1
+   
+  for i in 0..@indexes.size-1
     
     markados_inf[i] = Array.new
     puntos_inf[i] = Array.new
-    
     puntos_inf[i] << i
     markados_inf[i] << i
     p1 = @indexes[i]
@@ -113,10 +161,58 @@ def calculate_triangles
         break if @indexes[cont][0] != k    
         cont = cont + 1
       end
-      puts "salio de la iteracion No: " + i.to_s + 'puntos_inf: ' + puntos_inf[i][0].to_s + ' ' + puntos_inf[i][1].to_s + ' ' + puntos_inf[i][2].to_s
+      #puts "salio de la iteracion No: " + i.to_s + 'puntos_inf: ' + puntos_inf[i][0].to_s + ' ' + puntos_inf[i][1].to_s + ' ' + puntos_inf[i][2].to_s
+    end
+    
+    #begin SUP
+    
+    markados_sup[r_i] = Array.new
+    puntos_sup[r_i] = Array.new
+    puntos_sup[r_i] << r_i
+    markados_sup[r_i] << r_i
+    
+    p2 = @indexes[r_i]
+    bef_p2 = nil
+    
+    if @indexes[r_i-1]
+      if @indexes[r_i-1][0] == @indexes[r_i][0]
+        puntos_sup[r_i] << r_i - 1
+        bef_p2 = @indexes[r_i-1]
+      end
     end
 
+ 
+    r_cont = get_last_row(r_i)
+    
+    if r_cont and bef_p2
+      r_k = @indexes[r_cont][0]
+      while puntos_sup[r_i].size < 3
+        r_current_p = @indexes[r_cont]
+        r_bef_p = @indexes[r_cont -1]
+        if r_bef_p
+        
+          d1 = dist(p2, bef_p2, r_current_p)
+          d2 = dist(p2, bef_p2, r_bef_p)
+        
+          if d1 <= d2 and !markados_sup[r_i].include?(r_cont)
+            markados_sup[r_i] << r_cont
+            puntos_sup[r_i] << r_cont
+          end
+        else 
+          markados_sup[r_i] << r_cont
+          puntos_sup[r_i] << r_cont
+        end
+          break if @indexes[r_cont][0] != r_k
+          r_cont = r_cont - 1
+      end
+      #puts "salio de la iteracion No: " + r_i.to_s + 'puntos_inf: ' + puntos_sup[r_i][0].to_s + ' ' + puntos_sup[r_i][1].to_s + ' ' + puntos_sup[r_i][2].to_s
+    end    
+    r_i = r_i - 1
+    
+    
   end
+
+  
 end
 
 
@@ -127,6 +223,16 @@ def get_next_row(i)
       return j
     end
   end
+  false
+end
+
+def get_last_row(i)
+  r = @indexes[i][0]
+  (i-1).downto(0){|t|
+    if(@indexes[t][0] != r)
+      return t
+    end
+  }
   false
 end
 
@@ -190,60 +296,6 @@ end
 
 def dist(a1, a2, a3)
  Math.sqrt( ((a1[0] - a3[0])**2) + ((a1[1] - a3[1])**2) ) + Math.sqrt( ((a2[0] - a3[0])**2) + ((a2[1] - a3[1])**2) )
-end
-
-=begin
-def get_triangle_points(posInf, posSup) 
-  @markLow[posInf] = false
-  @markUpp[posSup] = false
-  
-  min_1_inf =  min_2_inf = min_1_sup = min_2_sup = 999
-  @ind_1_inf = @ind_2_inf = @ind_1_sup = @ind_2_sup  = -1
-  
-  distInf = @indexes[posInf]
-  distSup = @indexes[posSup]
-  
-  for i in 0..@indexes.size - 1
-    ct = @indexes.size - 1 - i
-        #puts 'i: ' + i.to_s + '| ct: ' + ct.to_s
-    
-    if (min_1_inf > distance(distInf, @indexes[i])) and @markLow[i]
-      min_1_inf = distance(distInf, @indexes[i])
-      @ind_1_inf = i
-    elsif (min_2_inf > distance(distInf, @indexes[i])) and @markLow[i] and i != @ind_1_inf
-      min_2_inf = distance(distInf, @indexes[i])
-      @ind_2_inf = i
-    end
-    
-    if (min_1_sup > distance(distSup, @indexes[ct])) and @markUpp[ct]
-      min_1_sup = distance(distSup, @indexes[ct])
-      @ind_1_sup = ct
-    elsif (min_2_sup > distance(distSup, @indexes[ct])) and @markUpp[ct] and ct != @ind_1_sup
-      min_2_sup = distance(distSup, @indexes[ct])
-      @ind_2_sup = ct
-    end
-    
-  end
-
-end
-
-=begin
-
-
-#generates triangle points
-
-=begin
-for i in 0..indexes.size
-  get_triangle_points(i, indexes.size - 1 - i, markLow, markUpp, indexes)
-  
-  if ind_1_inf != -1 and ind_2_inf != -1
-    puts i.to_s + ' ' + ind_1_inf.to_s + ' ' + ind_2_inf.to_s
-  end
-  
-  if ind_1_sup != -1 and ind_2_sup != -1
-    puts (indexes.size - 1 - i).to_s + ' ' + ind_1_inf.to_s + ' ' + ind_2_inf.to_s
-  end
-  
 end
 
 =begin
