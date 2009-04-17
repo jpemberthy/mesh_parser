@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#!/opt/local/bin/ruby1.9
 
 class MeshParser
 
@@ -18,14 +18,14 @@ end
 
 
 def parse
-  puts 'init building matrix'
+  puts 'init building all matrices'
   build_all
   puts 'init building indexes'
   build_indexes
-  puts 'init writing matrixess info'
+  puts 'init writing matrices info'
   @parsed.write("**** VALUES ****\n")
   write_points_info
-  puts 'init calculcating triangles'
+  puts 'init calculating triangles'
   @parsed.write("**** TRIANGLES ****\n")
   calculate_triangles
   @parsed.write("\n")
@@ -110,6 +110,7 @@ def calculate_triangles
   puntos_inf = [] 
   markados_sup = []
   puntos_sup = []
+  triangles = ''
   
   r_i = @indexes.size-1
    
@@ -152,7 +153,7 @@ def calculate_triangles
         break if @indexes[cont][0] != k    
         cont = cont + 1
       end
-      @parsed.write("#{puntos_inf[i][0].to_s},#{puntos_inf[i][1].to_s},#{puntos_inf[i][2].to_s},")
+      triangles << "#{puntos_inf[i][0].to_s},#{puntos_inf[i][1].to_s},#{puntos_inf[i][2].to_s},"
       #puts "salio de la iteracion No: " + i.to_s + 'puntos_inf: ' + puntos_inf[i][0].to_s + ' ' + puntos_inf[i][1].to_s + ' ' + puntos_inf[i][2].to_s
     end
     
@@ -197,14 +198,13 @@ def calculate_triangles
           break if @indexes[r_cont][0] != r_k
           r_cont = r_cont - 1
       end
-      @parsed.write("#{puntos_sup[r_i][0].to_s},#{puntos_sup[r_i][1].to_s},#{puntos_sup[r_i][2].to_s},")
+      triangles << "#{puntos_sup[r_i][0].to_s},#{puntos_sup[r_i][1].to_s},#{puntos_sup[r_i][2].to_s},"
       #puts "salio de la iteracion No: " + r_i.to_s + 'puntos_inf: ' + puntos_sup[r_i][0].to_s + ' ' + puntos_sup[r_i][1].to_s + ' ' + puntos_sup[r_i][2].to_s
     end    
     r_i = r_i - 1
-    
-    
   end
-
+  triangles.chop!
+  @parsed.write(triangles)
   
 end
 
