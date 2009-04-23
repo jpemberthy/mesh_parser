@@ -2,7 +2,7 @@
 
 class MeshParser
 
-attr_accessor :xcor, :ycor, :dp0, :s1, :indexes, :tolerance
+attr_accessor :xcor, :ycor, :dp0, :s1, :indexes, :tolerance, :p_counter
 attr_reader :f
 attr_writer :parsed
 
@@ -15,28 +15,23 @@ def initialize
   @s1 = []
   @indexes = []
   @tolerance = 5 #this value makes smoother the mesh.
+  @p_counter = 0
 end
 
 
 def parse
-  puts 'init building all matrices'
+  puts 'building all matrices'
   build_all
-  puts 'init building indexes'
+  puts 'getting all indexes'
+  build_main_index
+  puts 'build each index and values'
   build_indexes
-  puts 'init writing matrices info'
-  @parsed.write("**** VALUES ****\n")
-  write_points_info
-  puts 'init calculating triangles'
-  @parsed.write("**** TRIANGLES ****\n")
-  calculate_triangles
-  @parsed.write("\n")
-  puts 'finish calculating triangles'
   @f.close
   @parsed.close
 end
 
 #builds the indexes array.
-def build_indexes
+def build_main_index
   i = 0
   @xcor.each{|a|
     j = 0
@@ -53,16 +48,60 @@ def build_indexes
   @markUpp = Array.new(@indexes.size, true)
 end
 
-def calculate_triangles
+#builds the sub arrays of indexes
+def build_indexes
+  while @p_counter < @indexes.size
+    (@p_counter + 30000) < @indexes.size ? n = 30000 : n = @indexes.size - @p_counter
+    sub_indexes = @indexes[@p_counter, @p_counter + n - 1]
+    @parsed.write("**** VALUES ****\n")
+    puts 'writting values'
+    write_points_info(sub_indexes)
+    @parsed.write("**** TRIANGLES ****\n")
+    puts 'calculating triangles'
+    calculate_triangles(sub_indexes)
+    @p_counter += n
+  end
+  @parsed.write("**** END TRIANGLES ****\n")
+end
+
+def write_points_info(sub_index)
+  sub_index.size.times{|isi|
+    i = sub_index[isi][0]
+    j = sub_index[isi][1]
+    s1_str = ''
+    dp0_str = ''
+    if @dp0.size == @s1.size
+      @dp0.size.times {|k|
+        dp0_str << @dp0[k][i][j] << ','
+        s1_str << @s1[k][i][j] << ','
+      }
+   else  
+      @dp0.size.times {|k|
+        dp0_str << @dp0[k][i][j] << ','
+      }
+      @s1.size.times {|k|
+        s1_str << @s1[k][i][j] << ','
+      }
+    end
+    dp0_str.chop!
+    s1_str.chop!
+    @parsed.write("#{i},#{j},#{xcor[i][j]},#{ycor[i][j]},#{s1_str},#{dp0_str}\n")
+  }
+end
+
+
+def calculate_triangles(sub_array)
   markados_inf = []
   puntos_inf = [] 
   markados_sup = []
   puntos_sup = []
   triangles = ''
   
-  r_i = @indexes.size-1
+  r_i = sub_array.size-1
+  puts 'pos @indexes r_1' + "#{@indexes[r_i]}"
+  puts 'pos subarray r_1' + "#{sub_array[r_i]}"
    
-  for i in 0..@indexes.size-1
+  for i in 0..sub_array.size-1
     
     markados_inf[i] = Array.new
     puntos_inf[i] = Array.new
@@ -71,21 +110,21 @@ def calculate_triangles
     p1 = @indexes[i]
     next_p1 = nil
 
-    if @indexes[i+1]
-      if @indexes[i+1][0] == @indexes[i][0]
+    if sub_array[i+1]
+      if sub_array[i+1][0] == sub_array[i][0]
         puntos_inf[i] << i+1
-        next_p1 = @indexes[i+1]
+        next_p1 = sub_array[i+1]
       end
     end
 
-    cont = get_next_row(i)
+    cont = get_next_row(i, sub_array)
     v_point_inf = false
     
     if cont and next_p1
-      k = @indexes[cont][0]
+      k = sub_array[cont][0]
       while puntos_inf[i].size < 3
-        current_p = @indexes[cont]
-        next_p = @indexes[cont+1]
+        current_p = sub_array[cont]
+        next_p = sub_array[cont+1]
         if next_p
 
           d1 = dist(p1,next_p1, current_p) 
@@ -101,7 +140,7 @@ def calculate_triangles
           markados_inf[i] << cont
           puntos_inf[i] << cont
         end
-        break if @indexes[cont][0] != k    
+        break if sub_array[cont][0] != k    
         cont = cont + 1
       end
       if v_point_inf
@@ -118,26 +157,26 @@ def calculate_triangles
     puntos_sup[r_i] << r_i
     markados_sup[r_i] << r_i
     
-    p2 = @indexes[r_i]
+    p2 = sub_array[r_i]
     bef_p2 = nil
     
-    if @indexes[r_i-1]
-      if @indexes[r_i-1][0] == @indexes[r_i][0]
+    if sub_array[r_i-1]
+      if sub_array[r_i-1][0] == sub_array[r_i][0]
         puntos_sup[r_i] << r_i - 1
-        bef_p2 = @indexes[r_i-1]
+        bef_p2 = sub_array[r_i-1]
       end
     end
 
  
-    r_cont = get_last_row(r_i)
+    r_cont = get_last_row(r_i, sub_array)
     v_point_sup = false
     
     
     if r_cont and bef_p2
-      r_k = @indexes[r_cont][0]
+      r_k = sub_array[r_cont][0]
       while puntos_sup[r_i].size < 3
-        r_current_p = @indexes[r_cont]
-        r_bef_p = @indexes[r_cont -1]
+        r_current_p = sub_array[r_cont]
+        r_bef_p = sub_array[r_cont -1]
         if r_bef_p
         
           d1 = dist(p2, bef_p2, r_current_p)
@@ -153,7 +192,7 @@ def calculate_triangles
           markados_sup[r_i] << r_cont
           puntos_sup[r_i] << r_cont
         end
-          break if @indexes[r_cont][0] != r_k
+          break if sub_array[r_cont][0] != r_k
           r_cont = r_cont - 1
       end
       
@@ -165,26 +204,26 @@ def calculate_triangles
     end    
     r_i = r_i - 1
   end
-  triangles.chop!
+  triangles.chop! << "\n"
   @parsed.write(triangles)
   
 end
 
 
-def get_next_row(i)
-  r = @indexes[i][0]
-  for j in i..@indexes.size-1
-    if(@indexes[j][0] != r)
+def get_next_row(i, array)
+  r = array[i][0]
+  for j in i..array.size-1
+    if(array[j][0] != r)
       return j
     end
   end
   false
 end
 
-def get_last_row(i)
-  r = @indexes[i][0]
+def get_last_row(i, array)
+  r = array[i][0]
   (i-1).downto(0){|t|
-    if(@indexes[t][0] != r)
+    if(array[t][0] != r)
       return t
     end
   }
@@ -252,37 +291,6 @@ end
 
 def dist(a1, a2, a3)
  Math.sqrt( ((a1[0] - a3[0])**2) + ((a1[1] - a3[1])**2) ) + Math.sqrt( ((a2[0] - a3[0])**2) + ((a2[1] - a3[1])**2) )
-end
-
-def write_points_info
-  i = j = 0
-  @xcor.each{|a|
-    j = 0 
-    a.each{|x|
-      unless x == "0.000000e+000"
-        s1_str = ''
-        dp0_str = ''
-        if @dp0.size == @s1.size
-          @dp0.size.times {|k|
-            dp0_str << @dp0[k][i][j] << ','
-            s1_str << @s1[k][i][j] << ','
-          }
-        else  
-          @dp0.size.times {|k|
-            dp0_str << @dp0[k][i][j] << ','
-          }
-          @s1.size.times {|k|
-            s1_str << @s1[k][i][j] << ','
-          }
-        end  
-        dp0_str.chop!
-        s1_str.chop!
-        @parsed.write("#{xcor[i][j]},#{ycor[i][j]},#{s1_str},#{dp0_str}\n")
-      end
-      j = j + 1
-    }
-    i = i + 1
-  }
 end
 
 end
