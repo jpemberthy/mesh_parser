@@ -1,4 +1,8 @@
-#!/opt/local/bin/ruby1.9
+#!/usr/bin/ruby
+
+require 'rubygems'
+require 'geo_ruby'
+require File.join(File.dirname(__FILE__), 'rubyvor/lib/ruby_vor')
 
 class MeshParser
 
@@ -37,7 +41,8 @@ def build_main_index
     j = 0
     a.each{|x|
       unless x == "0.000000e+000"
-        @indexes << [i,j]
+        #@indexes << [i,j]
+        @indexes << RubyVor::Point.new(i,j)
         #puts i.to_s + '  ' + j.to_s
       end
       j = j + 1
@@ -65,8 +70,8 @@ end
 
 def write_points_info(sub_index)
   sub_index.size.times{|isi|
-    i = sub_index[isi][0]
-    j = sub_index[isi][1]
+    i = sub_index[isi].x.to_i
+    j = sub_index[isi].y.to_i
     s1_str = ''
     dp0_str = ''
     if @dp0.size == @s1.size
@@ -90,120 +95,8 @@ end
 
 
 def calculate_triangles(sub_array)
-  markados_inf = []
-  puntos_inf = [] 
-  markados_sup = []
-  puntos_sup = []
-  triangles = ''
-  
-  r_i = sub_array.size-1
-  puts 'pos @indexes r_1' + "#{@indexes[r_i]}"
-  puts 'pos subarray r_1' + "#{sub_array[r_i]}"
-   
-  for i in 0..sub_array.size-1
-    
-    markados_inf[i] = Array.new
-    puntos_inf[i] = Array.new
-    puntos_inf[i] << i
-    markados_inf[i] << i
-    p1 = @indexes[i]
-    next_p1 = nil
-
-    if sub_array[i+1]
-      if sub_array[i+1][0] == sub_array[i][0]
-        puntos_inf[i] << i+1
-        next_p1 = sub_array[i+1]
-      end
-    end
-
-    cont = get_next_row(i, sub_array)
-    v_point_inf = false
-    
-    if cont and next_p1
-      k = sub_array[cont][0]
-      while puntos_inf[i].size < 3
-        current_p = sub_array[cont]
-        next_p = sub_array[cont+1]
-        if next_p
-
-          d1 = dist(p1,next_p1, current_p) 
-          d2 = dist(p1,next_p1, next_p)
-          
-          v_point_inf = true if (d1 <= @tolerance and d2 <= @tolerance)
-          
-          if d1 <= d2 and !markados_inf[i].include?(cont)
-            markados_inf[i] << cont
-            puntos_inf[i] << cont
-          end
-        else
-          markados_inf[i] << cont
-          puntos_inf[i] << cont
-        end
-        break if sub_array[cont][0] != k    
-        cont = cont + 1
-      end
-      if v_point_inf
-        triangles << "#{puntos_inf[i][0].to_s},#{puntos_inf[i][1].to_s},#{puntos_inf[i][2].to_s},"
-        v_point_inf = false
-      end
-      #puts "salio de la iteracion No: " + i.to_s + 'puntos_inf: ' + puntos_inf[i][0].to_s + ' ' + puntos_inf[i][1].to_s + ' ' + puntos_inf[i][2].to_s
-    end
-    
-    #begin SUP
-    
-    markados_sup[r_i] = Array.new
-    puntos_sup[r_i] = Array.new
-    puntos_sup[r_i] << r_i
-    markados_sup[r_i] << r_i
-    
-    p2 = sub_array[r_i]
-    bef_p2 = nil
-    
-    if sub_array[r_i-1]
-      if sub_array[r_i-1][0] == sub_array[r_i][0]
-        puntos_sup[r_i] << r_i - 1
-        bef_p2 = sub_array[r_i-1]
-      end
-    end
-
- 
-    r_cont = get_last_row(r_i, sub_array)
-    v_point_sup = false
-    
-    
-    if r_cont and bef_p2
-      r_k = sub_array[r_cont][0]
-      while puntos_sup[r_i].size < 3
-        r_current_p = sub_array[r_cont]
-        r_bef_p = sub_array[r_cont -1]
-        if r_bef_p
-        
-          d1 = dist(p2, bef_p2, r_current_p)
-          d2 = dist(p2, bef_p2, r_bef_p)
-          
-          v_point_sup = true if (d1 <= @tolerance and d2 <= @tolerance)
-          
-          if d1 <= d2 and !markados_sup[r_i].include?(r_cont) 
-            markados_sup[r_i] << r_cont
-            puntos_sup[r_i] << r_cont
-          end
-        else 
-          markados_sup[r_i] << r_cont
-          puntos_sup[r_i] << r_cont
-        end
-          break if sub_array[r_cont][0] != r_k
-          r_cont = r_cont - 1
-      end
-      
-      if v_point_sup
-        triangles << "#{puntos_sup[r_i][0].to_s},#{puntos_sup[r_i][1].to_s},#{puntos_sup[r_i][2].to_s},"
-        v_point_sup = false
-      end
-      #puts "salio de la iteracion No: " + r_i.to_s + 'puntos_inf: ' + puntos_sup[r_i][0].to_s + ' ' + puntos_sup[r_i][1].to_s + ' ' + puntos_sup[r_i][2].to_s
-    end    
-    r_i = r_i - 1
-  end
-  triangles.chop! << "\n"
+  triangles = RubyVor::VDDT::Computation.from_points(sub_array).delaunay_triangulation_raw.flatten!.join(',')
+  triangles << "\n"
   @parsed.write(triangles)
   @parsed.write("**** END TRIANGLES ****\n")
 end
