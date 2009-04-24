@@ -24,7 +24,14 @@ def parse
   build_all
   puts 'getting all indexes'
   #build_main_index
-  @indexes = 
+  @indexes = [[0,0],[0,1],[0,2],[0,3],[0,4],[0,5],[0,6],[0,7],
+       [1,0],[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[1,7],
+       [2,0],[2,1],[2,2],[2,3],[2,4],[2,5],[2,6],[2,7],
+       [3,0],[3,1],[3,2],[3,3],[3,4],[3,5],[3,6],[3,7],
+       [4,0],[4,1],[4,2],[4,3],[4,4],[4,5],[4,6],[4,7],
+       [5,0],[5,1],[5,2],[5,3],[5,4],[5,5],[5,6],[5,7],
+       [6,0],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],[6,7],
+       [7,0],[7,1],[7,2],[7,3],[7,4],[7,5],[7,6],[7,7]]
   puts 'build each index and values'
   build_indexes
   @f.close
@@ -53,14 +60,14 @@ end
 def build_indexes
   while @p_counter < @indexes.size
     (@p_counter + 30000) < @indexes.size ? n = 30000 : n = @indexes.size - @p_counter
-    sub_indexes = @indexes[@p_counter, @p_counter + n - 1]
+    sub_indexes = @indexes[@p_counter, @p_counter + n]
     @parsed.write("**** VALUES ****\n")
     puts 'writting values'
     write_points_info(sub_indexes)
     @parsed.write("**** TRIANGLES ****\n")
     puts 'calculating triangles'
     calculate_triangles(sub_indexes)
-    @p_counter += n
+    @p_counter += n+1
   end
 end
 
@@ -98,9 +105,8 @@ def calculate_triangles(sub_array)
   triangles = ''
   
   r_i = sub_array.size-1
-  puts 'pos @indexes r_1' + "#{@indexes[r_i]}"
-  puts 'pos subarray r_1' + "#{sub_array[r_i]}"
-   
+  puts sub_array.size
+  puts @indexes.size
   for i in 0..sub_array.size-1
     
     markados_inf[i] = Array.new
