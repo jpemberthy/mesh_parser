@@ -61,7 +61,6 @@ def build_indexes
     calculate_triangles(sub_indexes)
     @p_counter += n
   end
-  @parsed.write("**** END TRIANGLES ****\n")
 end
 
 def write_points_info(sub_index)
@@ -206,7 +205,7 @@ def calculate_triangles(sub_array)
   end
   triangles.chop! << "\n"
   @parsed.write(triangles)
-  
+  @parsed.write("**** END TRIANGLES ****\n")
 end
 
 
