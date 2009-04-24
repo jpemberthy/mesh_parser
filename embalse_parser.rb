@@ -23,7 +23,8 @@ def parse
   puts 'building all matrices'
   build_all
   puts 'getting all indexes'
-  build_main_index
+  #build_main_index
+  @indexes = 
   puts 'build each index and values'
   build_indexes
   @f.close
