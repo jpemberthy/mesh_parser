@@ -8,7 +8,7 @@ attr_writer :parsed
 
 def initialize
   @f = File.new(ARGV[0])
-  @parsed = File.new("parsed.out", "w+")
+  @parsed = File.new("parsed.uni", "w+")
   @xcor = []
   @ycor = []
   @dp0 = []
@@ -30,22 +30,44 @@ def parse
   @parsed.close
 end
 
-#builds the indexes array.
+#builds the indexes array, also gets the max n min of xcor n ycor, n then transforms both matrices.
 def build_main_index
+  x_min = 99999999.0
+  x_max = 0.0
+  y_min = 99999999.0
+  y_max = 0.0
   i = 0
   @xcor.each{|a|
     j = 0
     a.each{|x|
       unless x == "0.000000e+000"
         @indexes << [i,j]
-        #puts i.to_s + '  ' + j.to_s
+        y = @ycor[i][j].to_f
+        x = x.to_f
+        if x < x_min
+          x_min = x
+        elsif x > x_max
+          x_max = x
+        end
+        if y < y_min
+          y_min = y
+        elsif y > y_max
+          y_max = y
+        end
       end
       j = j + 1
     }
     i = i + 1
   }
-  @markLow = Array.new(@indexes.size, true) 
-  @markUpp = Array.new(@indexes.size, true)
+  
+  
+  @indexes.each{|p|
+    i = p[0]
+    j = p[1]
+    @xcor[i][j] = (@xcor[i][j]).to_f - ((x_min + x_max) / 2.0) 
+    @ycor[i][j] = (@ycor[i][j]).to_f - ((y_min + y_max) / 2.0)
+  }
+  
 end
 
 #builds the sub arrays of indexes
