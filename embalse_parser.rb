@@ -94,12 +94,12 @@ def write_points_info(sub_index)
     dp0_str = ''
     if @dp0.size == @s1.size
       @dp0.size.times {|k|
-        dp0_str << @dp0[k][i][j] << ','
+        dp0_str << (@dp0[k][i][j].to_f * -1).to_s << ','
         s1_str << @s1[k][i][j] << ','
       }
    else  
       @dp0.size.times {|k|
-        dp0_str << @dp0[k][i][j] << ','
+        dp0_str << (@dp0[k][i][j].to_f * -1).to_s << ','
       }
       @s1.size.times {|k|
         s1_str << @s1[k][i][j] << ','
