@@ -163,7 +163,7 @@ def calculate_triangles(sub_array)
         cont = cont + 1
       end
       if v_point_inf
-        triangles << "#{puntos_inf[i][0].to_s},#{puntos_inf[i][1].to_s},#{puntos_inf[i][2].to_s},"
+        triangles << "#{puntos_inf[i][0].to_s},#{puntos_inf[i][2].to_s},#{puntos_inf[i][1].to_s},"
         v_point_inf = false
       end
       #puts "salio de la iteracion No: " + i.to_s + 'puntos_inf: ' + puntos_inf[i][0].to_s + ' ' + puntos_inf[i][1].to_s + ' ' + puntos_inf[i][2].to_s
@@ -216,7 +216,7 @@ def calculate_triangles(sub_array)
       end
       
       if v_point_sup
-        triangles << "#{puntos_sup[r_i][0].to_s},#{puntos_sup[r_i][1].to_s},#{puntos_sup[r_i][2].to_s},"
+        triangles << "#{puntos_sup[r_i][0].to_s},#{puntos_sup[r_i][2].to_s},#{puntos_sup[r_i][1].to_s},"
         v_point_sup = false
       end
       #puts "salio de la iteracion No: " + r_i.to_s + 'puntos_inf: ' + puntos_sup[r_i][0].to_s + ' ' + puntos_sup[r_i][1].to_s + ' ' + puntos_sup[r_i][2].to_s
