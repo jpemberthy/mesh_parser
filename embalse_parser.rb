@@ -8,7 +8,11 @@ attr_writer :parsed
 
 def initialize
   @f = File.new(ARGV[0])
+  @jump = ARGV[1]
   @parsed = File.new("parsed.uni", "w+")
+  @res1 = File.new("res1.uni", "w+")
+  @res2 = File.new("res2.uni", "w+")
+  @res3 = File.new("res3.uni", "w+")
   @xcor = []
   @ycor = []
   @dp0 = []
@@ -107,7 +111,7 @@ def write_points_info(sub_index)
     end
     dp0_str.chop!
     s1_str.chop!
-    @parsed.write("#{i},#{j},#{xcor[i][j]},#{ycor[i][j]},#{s1_str},#{dp0_str}\n")
+    @parsed.write("#{i},#{j},#{xcor[i][j]},#{ycor[i][j]},#{s1_str}|#{dp0_str}\n")
   }
 end
 
