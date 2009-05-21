@@ -2,24 +2,37 @@
 
 class MeshParser
 
-attr_accessor :xcor, :ycor, :dp0, :s1, :indexes, :tolerance, :p_counter
+attr_accessor :xcor, :ycor, :dp0, :s1, :indexes, :tolerance, :p_counter, :p_counterMed, :p_counterLow, :indexesLow, :indexesMed
 attr_reader :f
-attr_writer :parsed
+attr_writer :parsed, :resMed, :resLow
 
 def initialize
   @f = File.new(ARGV[0])
   @jump = ARGV[1]
   @parsed = File.new("parsed.uni", "w+")
-  @res1 = File.new("res1.uni", "w+")
-  @res2 = File.new("res2.uni", "w+")
-  @res3 = File.new("res3.uni", "w+")
-  @xcor = []
-  @ycor = []
+  @resMed = File.new("parsedMed.uni", "w+")
+  @resLow = File.new("parsedLow.uni", "w+")
+  # @res3 = File.new("res3.uni", "w+")
+
+  @xcor = [] #full resolution
+  @ycor = [] #full resolution
+  @indexes = [] #full resolution
+
+  #medium resolution
+  @indexesMed = []
+
+  #low resolution
+  @indexesLow = []
+
   @dp0 = []
   @s1 = []
-  @indexes = []
+
   @tolerance = 5 #this value makes smoother the mesh.
+
   @p_counter = 0
+  @p_counterMed = 0
+  @p_counterLow = 0
+
 end
 
 
@@ -32,6 +45,8 @@ def parse
   build_indexes
   @f.close
   @parsed.close
+  @resMed.close
+  @resLow.close
 end
 
 #builds the indexes array, also gets the max n min of xcor n ycor, n then transforms both matrices.
@@ -41,10 +56,28 @@ def build_main_index
   y_min = 99999999.0
   y_max = 0.0
   i = 0
+  iMed = 0
+  iLow = 0
+  contRes = 0;
+
   @xcor.each{|a|
     j = 0
     a.each{|x|
       unless x == "0.000000e+000"
+
+        if contRes%2 == 0 #Medium Resolution points
+          # @indexesMed << [iMed,jMed]
+          # @xcorMed[iMed][jMed] = @xcor[i][j]
+          @indexesMed << [i,j]
+
+        end
+        if contRes%3 == 0 #Low Resolution pts
+          # @indexesLow << [iLow,jLow]
+          # @xcorLow[iLow][jLow] = @xcor[i][j]
+          @indexesLow << [i,j]
+
+        end
+
         @indexes << [i,j]
         y = @ycor[i][j].to_f
         x = x.to_f
@@ -59,38 +92,71 @@ def build_main_index
           y_max = y
         end
       end
+
+      contRes = contRes + 1
+
       j = j + 1
     }
     i = i + 1
   }
-  
-  
+
+
   @indexes.each{|p|
     i = p[0]
     j = p[1]
     @xcor[i][j] = (@xcor[i][j]).to_f - ((x_min + x_max) / 2.0) 
     @ycor[i][j] = (@ycor[i][j]).to_f - ((y_min + y_max) / 2.0)
   }
-  
+
+
 end
 
 #builds the sub arrays of indexes
 def build_indexes
+  puts '--> Building full resolution indexes...'
   while @p_counter < @indexes.size
     (@p_counter + 30000) < @indexes.size ? n = 30000 : n = @indexes.size - @p_counter
     @p_counter - 500 > 0 ? li = @p_counter - 500 : li = @p_counter
     sub_indexes = @indexes[li, @p_counter + n]
     @parsed.write("**** VALUES ****\n")
     puts 'writting values'
-    write_points_info(sub_indexes)
+    write_points_info(sub_indexes, @parsed)
     @parsed.write("**** TRIANGLES ****\n")
     puts 'calculating triangles'
-    calculate_triangles(sub_indexes)
+    calculate_triangles(sub_indexes, @parsed, @tolerance)
     @p_counter += n+1
   end
+  puts '--> Building Medium resolution indexes...'
+  while @p_counterMed < @indexesMed.size
+    (@p_counterMed + 30000) < @indexesMed.size ? n = 30000 : n = @indexesMed.size - @p_counterMed
+    @p_counterMed - 500 > 0 ? li = @p_counterMed - 500 : li = @p_counterMed
+    sub_indexes = @indexesMed[li, @p_counterMed + n]
+    @resMed.write("**** VALUES ****\n")
+    puts 'writting values'
+    write_points_info(sub_indexes, @resMed)
+    @resMed.write("**** TRIANGLES ****\n")
+    puts 'calculating triangles'
+    calculate_triangles(sub_indexes, @resMed, @tolerance )
+    @p_counterMed += n+1
+  end
+  puts '--> Building Low resolution indexes...'
+  while @p_counterLow < @indexesLow.size
+    (@p_counterLow + 30000) < @indexesLow.size ? n = 30000 : n = @indexesLow.size - @p_counterLow
+    @p_counterLow - 500 > 0 ? li = @p_counterLow - 500 : li = @p_counterLow
+    sub_indexes = @indexesLow[li, @p_counterLow + n]
+    @resLow.write("**** VALUES ****\n")
+    puts 'writting values'
+    write_points_info(sub_indexes, @resLow)
+    @resLow.write("**** TRIANGLES ****\n")
+    puts 'calculating triangles'
+    calculate_triangles(sub_indexes, @resLow, @tolerance)
+    @p_counterLow += n+1
+  end
+
+
 end
 
-def write_points_info(sub_index)
+def write_points_info(sub_index, file)
   sub_index.size.times{|isi|
     i = sub_index[isi][0]
     j = sub_index[isi][1]
@@ -111,21 +177,21 @@ def write_points_info(sub_index)
     end
     dp0_str.chop!
     s1_str.chop!
-    @parsed.write("#{i},#{j},#{xcor[i][j]},#{ycor[i][j]},#{s1_str}|#{dp0_str}\n")
+    file.write("#{i},#{j},#{xcor[i][j]},#{ycor[i][j]},#{s1_str}|#{dp0_str}\n")
   }
 end
 
 
-def calculate_triangles(sub_array)
+def calculate_triangles(sub_array, file, tol)
   markados_inf = []
   puntos_inf = [] 
   markados_sup = []
   puntos_sup = []
   triangles = ''
-  
+
   r_i = sub_array.size-1
   for i in 0..sub_array.size-1
-    
+
     markados_inf[i] = Array.new
     puntos_inf[i] = Array.new
     puntos_inf[i] << i
@@ -142,7 +208,7 @@ def calculate_triangles(sub_array)
 
     cont = get_next_row(i, sub_array)
     v_point_inf = false
-    
+
     if cont and next_p1
       k = sub_array[cont][0]
       while puntos_inf[i].size < 3
@@ -152,9 +218,9 @@ def calculate_triangles(sub_array)
 
           d1 = dist(p1,next_p1, current_p) 
           d2 = dist(p1,next_p1, next_p)
-          
-          v_point_inf = true if (d1 <= @tolerance and d2 <= @tolerance)
-          
+
+          v_point_inf = true if (d1 <= tol and d2 <= tol)
+
           if d1 <= d2 and !markados_inf[i].include?(cont)
             markados_inf[i] << cont
             puntos_inf[i] << cont
@@ -172,17 +238,17 @@ def calculate_triangles(sub_array)
       end
       #puts "salio de la iteracion No: " + i.to_s + 'puntos_inf: ' + puntos_inf[i][0].to_s + ' ' + puntos_inf[i][1].to_s + ' ' + puntos_inf[i][2].to_s
     end
-    
+
     #begin SUP
-    
+
     markados_sup[r_i] = Array.new
     puntos_sup[r_i] = Array.new
     puntos_sup[r_i] << r_i
     markados_sup[r_i] << r_i
-    
+
     p2 = sub_array[r_i]
     bef_p2 = nil
-    
+
     if sub_array[r_i-1]
       if sub_array[r_i-1][0] == sub_array[r_i][0]
         puntos_sup[r_i] << r_i - 1
@@ -190,23 +256,23 @@ def calculate_triangles(sub_array)
       end
     end
 
- 
+
     r_cont = get_last_row(r_i, sub_array)
     v_point_sup = false
-    
-    
+
+
     if r_cont and bef_p2
       r_k = sub_array[r_cont][0]
       while puntos_sup[r_i].size < 3
         r_current_p = sub_array[r_cont]
         r_bef_p = sub_array[r_cont -1]
         if r_bef_p
-        
+
           d1 = dist(p2, bef_p2, r_current_p)
           d2 = dist(p2, bef_p2, r_bef_p)
-          
-          v_point_sup = true if (d1 <= @tolerance and d2 <= @tolerance)
-          
+
+          v_point_sup = true if (d1 <= tol and d2 <= tol)
+
           if d1 <= d2 and !markados_sup[r_i].include?(r_cont) 
             markados_sup[r_i] << r_cont
             puntos_sup[r_i] << r_cont
@@ -218,7 +284,7 @@ def calculate_triangles(sub_array)
           break if sub_array[r_cont][0] != r_k
           r_cont = r_cont - 1
       end
-      
+
       if v_point_sup
         triangles << "#{puntos_sup[r_i][0].to_s},#{puntos_sup[r_i][2].to_s},#{puntos_sup[r_i][1].to_s},"
         v_point_sup = false
@@ -227,9 +293,10 @@ def calculate_triangles(sub_array)
     end    
     r_i = r_i - 1
   end
+
   triangles.chop! << "\n"
-  @parsed.write(triangles)
-  @parsed.write("**** END TRIANGLES ****\n")
+  file.write(triangles)
+  file.write("**** END TRIANGLES ****\n")
 end
 
 
@@ -259,6 +326,8 @@ def build_all
   until matrix_ready?(@xcor, @ycor, @s1, @dp0) 
     if line =~ (/XCOR|YCOR|S1|DP/)
       @parsed.write(line)
+      @resMed.write(line)
+      @resLow.write(line)
       if line =~ /XCOR/
         build_smatrix(@xcor)
       elsif line =~ /YCOR/
